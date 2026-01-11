@@ -1,0 +1,6 @@
+# Assets Folder
+
+Place your app icons and images here:
+- Logo.png (150x150 for app icon)
+- Icons folder for various UI icons
+- Splash screen images
