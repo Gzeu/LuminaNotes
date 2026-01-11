@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LuminaNotes.Core.Models;
 using LuminaNotes.Core.Services;
+using LuminaNotes.Core.Models;
 using System.Threading.Tasks;
 
 namespace LuminaNotes.WinUI.ViewModels;
@@ -15,10 +15,7 @@ public partial class MainViewModel : ObservableObject
     private bool isAiSidebarOpen = true;
 
     [ObservableProperty]
-    private double aiSidebarWidth = 340;
-
-    [ObservableProperty]
-    private Note? currentNote;
+    private string statusMessage = "Ready";
 
     public MainViewModel(NoteService noteService, AiService aiService)
     {
@@ -26,37 +23,23 @@ public partial class MainViewModel : ObservableObject
         _aiService = aiService;
     }
 
-    public async Task CreateNewNoteAsync()
+    [RelayCommand]
+    private async Task NewNoteAsync()
     {
         var newNote = new Note
         {
-            Title = "Untitled Note",
-            Content = string.Empty
+            Title = "New Note",
+            Content = "",
+            Created = System.DateTime.Now
         };
 
-        CurrentNote = await _noteService.CreateNoteAsync(newNote);
+        await _noteService.CreateNoteAsync(newNote);
+        StatusMessage = "New note created";
     }
 
-    public async Task<string> SummarizeCurrentNoteAsync()
+    [RelayCommand]
+    private void ToggleAiSidebar()
     {
-        if (CurrentNote == null || string.IsNullOrEmpty(CurrentNote.Content))
-            return "No note content to summarize.";
-
-        var summary = await _aiService.SummarizeAsync(CurrentNote.Content);
-        return $"Summary: {summary}";
-    }
-
-    public async Task<string> RewriteCurrentNoteAsync(string style = "professional")
-    {
-        if (CurrentNote == null || string.IsNullOrEmpty(CurrentNote.Content))
-            return "No note content to rewrite.";
-
-        return await _aiService.RewriteAsync(CurrentNote.Content, style);
-    }
-
-    public async Task<string> GenerateIdeasAsync()
-    {
-        var topic = CurrentNote?.Title ?? "general topics";
-        return await _aiService.GenerateIdeasAsync(topic);
+        IsAiSidebarOpen = !IsAiSidebarOpen;
     }
 }

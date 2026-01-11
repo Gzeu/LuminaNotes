@@ -16,15 +16,15 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Top CommandBar -->
+        <!-- Command Bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
             <AppBarButton Icon="Add" Label="New Note" Click="NewNote_Click"/>
             <AppBarButton Icon="Save" Label="Save" Click="Save_Click"/>
             <AppBarSeparator/>
-            <AppBarToggleButton Icon="Setting" Label="AI Panel" IsChecked="{x:Bind ViewModel.IsAiSidebarOpen, Mode=TwoWay}"/>
+            <AppBarButton Icon="Find" Label="Search" Click="Search_Click"/>
         </CommandBar>
 
-        <!-- Main content area -->
+        <!-- Main Layout -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -32,19 +32,16 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Navigation Sidebar -->
-            <NavigationView x:Name="NavView" 
-                          Grid.Column="0"
-                          PaneDisplayMode="LeftCompact"
-                          IsBackButtonVisible="Collapsed"
-                          IsSettingsVisible="True"
-                          ItemInvoked="NavView_ItemInvoked"
-                          Width="320"
-                          OpenPaneLength="280">
+            <!-- Navigation Sidebar -->
+            <NavigationView x:Name="NavView" Grid.Column="0"
+                            PaneDisplayMode="LeftCompact"
+                            IsBackButtonVisible="Collapsed"
+                            IsSettingsVisible="True"
+                            ItemInvoked="NavView_ItemInvoked">
                 <NavigationView.MenuItems>
                     <NavigationViewItem Tag="DailyNotes" Content="Daily Notes">
                         <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE163;"/>
+                            <FontIcon Glyph="&#xE787;"/>
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem Tag="AllNotes" Content="All Notes">
@@ -54,7 +51,7 @@
                     </NavigationViewItem>
                     <NavigationViewItem Tag="GraphView" Content="Graph View">
                         <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE80F;"/>
+                            <FontIcon Glyph="&#xE915;"/>
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem Tag="Search" Content="Search">
@@ -65,55 +62,42 @@
                 </NavigationView.MenuItems>
             </NavigationView>
 
-            <!-- Center Content Frame -->
-            <Frame x:Name="ContentFrame" 
-                   Grid.Column="1" 
-                   Padding="24,16,24,16"/>
+            <!-- Content Frame -->
+            <Frame x:Name="ContentFrame" Grid.Column="1" Padding="24,16"/>
 
-            <!-- Right AI Sidebar -->
-            <Grid Grid.Column="2" 
-                  Width="{x:Bind ViewModel.AiSidebarWidth, Mode=OneWay}"
-                  Visibility="{x:Bind ViewModel.IsAiSidebarOpen, Mode=OneWay}">
+            <!-- AI Sidebar -->
+            <Grid Grid.Column="2" Width="340" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  Padding="16" x:Name="AiSidebar">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Padding="16,12">
-                    <TextBlock Text="AI Assistant" 
-                             Style="{StaticResource SubtitleTextBlockStyle}"/>
-                </Border>
+                <TextBlock Grid.Row="0" Text="AI Assistant" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,16"/>
 
-                <StackPanel Grid.Row="1" Spacing="8" Padding="16">
-                    <Button Content="Summarize Note" 
-                          HorizontalAlignment="Stretch"
-                          Click="Summarize_Click"/>
-                    <Button Content="Rewrite Text" 
-                          HorizontalAlignment="Stretch"
-                          Click="Rewrite_Click"/>
-                    <Button Content="Generate Ideas" 
-                          HorizontalAlignment="Stretch"
-                          Click="Generate_Click"/>
-                    <Button Content="Q&amp;A on Notes" 
-                          HorizontalAlignment="Stretch"
-                          Click="Query_Click"/>
+                <StackPanel Grid.Row="1" Spacing="12">
+                    <Button Content="Summarize Note" HorizontalAlignment="Stretch" Click="Summarize_Click"/>
+                    <Button Content="Rewrite Text" HorizontalAlignment="Stretch" Click="Rewrite_Click"/>
+                    <Button Content="Generate Ideas" HorizontalAlignment="Stretch" Click="Generate_Click"/>
+                    <Button Content="Q&amp;A on Notes" HorizontalAlignment="Stretch" Click="Query_Click"/>
+                    
+                    <TextBlock Text="AI Response:" Margin="0,16,0,8" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                    <ScrollViewer Height="300" VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="AiResponseText" TextWrapping="Wrap" Text="AI responses will appear here..."/>
+                    </ScrollViewer>
                 </StackPanel>
 
-                <TextBox Grid.Row="2" 
-                       PlaceholderText="Ask AI something..."
-                       Margin="16"
-                       AcceptsReturn="False"/>
+                <TextBox Grid.Row="2" x:Name="AiQueryBox" PlaceholderText="Ask AI..." 
+                         KeyDown="AiQueryBox_KeyDown"/>
             </Grid>
         </Grid>
 
-        <!-- Bottom Status Bar -->
-        <InfoBar x:Name="StatusBar" 
-               Grid.Row="2" 
-               Title="Status" 
-               Message="Ready" 
-               Severity="Informational" 
-               IsOpen="False"
-               IsClosable="True"/>
+        <!-- Status Bar -->
+        <InfoBar Grid.Row="2" x:Name="StatusBar" 
+                 Title="Status" 
+                 Message="Ready" 
+                 Severity="Informational" 
+                 IsOpen="False"/>
     </Grid>
 </Window>
