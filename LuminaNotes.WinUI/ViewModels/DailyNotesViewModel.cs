@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LuminaNotes.Core.Models;
 using LuminaNotes.Core.Services;
+using LuminaNotes.Core.Utilities;
 using System;
 using System.Threading.Tasks;
 
@@ -9,15 +10,16 @@ namespace LuminaNotes.WinUI.ViewModels;
 public partial class DailyNotesViewModel : ObservableObject
 {
     private readonly NoteService _noteService;
+    private Note? _currentNote;
 
     [ObservableProperty]
-    private string todayTitle = $"Today: {DateTime.Now:MMMM dd, yyyy}";
+    private string todayTitle = $"Today: {DateTime.Now:dddd, MMMM dd, yyyy}";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WordCount))]
     private string noteContent = string.Empty;
 
-    [ObservableProperty]
-    private Note? currentNote;
+    public string WordCount => $"{MarkdownHelper.GetWordCount(NoteContent)} words";
 
     public DailyNotesViewModel(NoteService noteService)
     {
@@ -26,16 +28,34 @@ public partial class DailyNotesViewModel : ObservableObject
 
     public async Task LoadDailyNoteAsync()
     {
-        CurrentNote = await _noteService.GetDailyNoteAsync(DateTime.Today);
-        NoteContent = CurrentNote?.Content ?? string.Empty;
-        TodayTitle = $"Today: {DateTime.Now:dddd, MMMM dd, yyyy}";
+        var today = DateTime.Today;
+        var dateString = today.ToString("yyyy-MM-dd");
+        
+        _currentNote = await _noteService.GetDailyNoteAsync(today);
+        
+        if (_currentNote == null)
+        {
+            _currentNote = new Note
+            {
+                Title = TodayTitle,
+                Content = "",
+                IsDailyNote = true,
+                DailyNoteDate = dateString,
+                Created = DateTime.Now
+            };
+            await _noteService.CreateNoteAsync(_currentNote);
+        }
+
+        NoteContent = _currentNote.Content;
     }
 
-    public async Task SaveNoteAsync()
+    partial void OnNoteContentChanged(string value)
     {
-        if (CurrentNote == null) return;
-
-        CurrentNote.Content = NoteContent;
-        await _noteService.UpdateNoteAsync(CurrentNote);
+        // Auto-save logic (debounced)
+        if (_currentNote != null)
+        {
+            _currentNote.Content = value;
+            _ = Task.Run(async () => await _noteService.UpdateNoteAsync(_currentNote));
+        }
     }
 }

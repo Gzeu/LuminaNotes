@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using LuminaNotes.Core.Models;
 using LuminaNotes.Core.Services;
 using System.Collections.ObjectModel;
@@ -17,16 +16,12 @@ public partial class SearchViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<Note> searchResults = new();
 
-    [ObservableProperty]
-    private bool isSearching;
-
     public SearchViewModel(NoteService noteService)
     {
         _noteService = noteService;
     }
 
-    [RelayCommand]
-    private async Task SearchAsync()
+    public async Task SearchAsync()
     {
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
@@ -34,19 +29,11 @@ public partial class SearchViewModel : ObservableObject
             return;
         }
 
-        IsSearching = true;
-        try
+        var results = await _noteService.SearchNotesAsync(SearchQuery);
+        SearchResults.Clear();
+        foreach (var note in results)
         {
-            var results = await _noteService.SearchNotesAsync(SearchQuery);
-            SearchResults.Clear();
-            foreach (var note in results)
-            {
-                SearchResults.Add(note);
-            }
-        }
-        finally
-        {
-            IsSearching = false;
+            SearchResults.Add(note);
         }
     }
 }

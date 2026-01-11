@@ -1,50 +1,59 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using LuminaNotes.Core.Services;
-using Microsoft.UI.Xaml;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace LuminaNotes.WinUI.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+    private readonly DatabaseService _databaseService;
     private readonly AiService _aiService;
-    private readonly DatabaseService _dbService;
 
     [ObservableProperty]
-    private string ollamaModel = "llama3.1:8b";
+    private string ollamaEndpoint = "http://localhost:11434";
 
     [ObservableProperty]
-    private bool isAiAvailable;
+    private string selectedModel = "llama3.1:8b";
 
     [ObservableProperty]
-    private ElementTheme selectedTheme = ElementTheme.Dark;
+    private ObservableCollection<string> availableModels = new();
+
+    [ObservableProperty]
+    private bool encryptionEnabled = false;
 
     [ObservableProperty]
     private string databasePath = string.Empty;
 
-    public SettingsViewModel(AiService aiService, DatabaseService dbService)
+    [ObservableProperty]
+    private string connectionStatus = "Not tested";
+
+    public SettingsViewModel(DatabaseService databaseService, AiService aiService)
     {
+        _databaseService = databaseService;
         _aiService = aiService;
-        _dbService = dbService;
-        DatabasePath = _dbService.GetDatabasePath();
     }
 
-    [RelayCommand]
-    private async Task CheckAiStatusAsync()
+    public async Task LoadSettingsAsync()
     {
-        IsAiAvailable = await _aiService.IsAiAvailableAsync();
+        DatabasePath = _databaseService.GetDatabasePath();
+        
+        var models = await _aiService.GetAvailableModelsAsync();
+        AvailableModels.Clear();
+        foreach (var model in models)
+        {
+            AvailableModels.Add(model);
+        }
+
+        if (AvailableModels.Count == 0)
+        {
+            AvailableModels.Add("llama3.1:8b");
+        }
     }
 
-    [RelayCommand]
-    private void ChangeModel()
+    public async Task TestAiConnectionAsync()
     {
-        _aiService.SetModel(OllamaModel);
-    }
-
-    [RelayCommand]
-    private void ChangeTheme()
-    {
-        // TODO: Implement theme changing logic
+        var isAvailable = await _aiService.IsAiAvailableAsync();
+        ConnectionStatus = isAvailable ? "✓ Connected" : "✗ Connection failed";
     }
 }

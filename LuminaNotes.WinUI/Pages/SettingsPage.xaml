@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="LuminaNotes.WinUI.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel Spacing="24" MaxWidth="800">
+            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}"/>
+
+            <!-- Appearance -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <ComboBox Header="Theme" PlaceholderText="Select theme">
+                    <ComboBoxItem Content="Light"/>
+                    <ComboBoxItem Content="Dark" IsSelected="True"/>
+                    <ComboBoxItem Content="Use system setting"/>
+                </ComboBox>
+            </StackPanel>
+
+            <!-- AI Settings -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="AI Configuration" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBox Header="Ollama Endpoint" 
+                         PlaceholderText="http://localhost:11434"
+                         Text="{x:Bind ViewModel.OllamaEndpoint, Mode=TwoWay}"/>
+                <ComboBox Header="Default Model" 
+                          ItemsSource="{x:Bind ViewModel.AvailableModels, Mode=OneWay}"
+                          SelectedItem="{x:Bind ViewModel.SelectedModel, Mode=TwoWay}"/>
+                <Button Content="Test Connection" Click="TestConnection_Click"/>
+            </StackPanel>
+
+            <!-- Storage -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Storage" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="{x:Bind ViewModel.DatabasePath, Mode=OneWay}" 
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <ToggleSwitch Header="Enable encryption" IsOn="{x:Bind ViewModel.EncryptionEnabled, Mode=TwoWay}"/>
+            </StackPanel>
+
+            <!-- About -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="About" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="Lumina Notes v1.0.0" Style="{StaticResource BodyTextBlockStyle}"/>
+                <TextBlock Text="AI-powered note-taking for Windows" 
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <HyperlinkButton Content="GitHub Repository" NavigateUri="https://github.com/Gzeu/LuminaNotes"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
