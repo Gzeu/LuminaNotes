@@ -1,87 +1,137 @@
 using Markdig;
-using System.Text.RegularExpressions;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace LuminaNotes.Core.Utilities;
 
 /// <summary>
-/// Utilities for Markdown parsing and wiki-link extraction
+/// Helper for parsing and processing Markdown content
 /// </summary>
 public static class MarkdownHelper
 {
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+    private static readonly MarkdownPipeline _pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .Build();
 
+    private static readonly Regex WikiLinkRegex = new(@"\[\[([^\]]+)\]\]", RegexOptions.Compiled);
+    private static readonly Regex TagRegex = new(@"#([\w-]+)", RegexOptions.Compiled);
+
     /// <summary>
-    /// Converts Markdown to HTML
+    /// Convert Markdown to HTML
     /// </summary>
     public static string ToHtml(string markdown)
     {
         if (string.IsNullOrEmpty(markdown))
             return string.Empty;
 
-        return Markdown.ToHtml(markdown, Pipeline);
+        return Markdown.ToHtml(markdown, _pipeline);
     }
 
     /// <summary>
-    /// Extracts wiki-style links [[Note Title]] from content
-    /// </summary>
-    public static List<string> ExtractWikiLinks(string content)
-    {
-        var links = new List<string>();
-        if (string.IsNullOrEmpty(content))
-            return links;
-
-        // Regex pattern for [[wiki links]]
-        var pattern = @"\[\[([^\]]+)\]\]";
-        var matches = Regex.Matches(content, pattern);
-
-        foreach (Match match in matches)
-        {
-            if (match.Groups.Count > 1)
-            {
-                links.Add(match.Groups[1].Value.Trim());
-            }
-        }
-
-        return links;
-    }
-
-    /// <summary>
-    /// Converts wiki links to clickable HTML links
-    /// </summary>
-    public static string RenderWikiLinks(string content)
-    {
-        if (string.IsNullOrEmpty(content))
-            return content;
-
-        var pattern = @"\[\[([^\]]+)\]\]";
-        return Regex.Replace(content, pattern, match =>
-        {
-            var linkText = match.Groups[1].Value;
-            return $"<a href='#note:{linkText}' class='wiki-link'>{linkText}</a>";
-        });
-    }
-
-    /// <summary>
-    /// Extracts plain text from Markdown (strips formatting)
+    /// Convert Markdown to plain text (strip formatting)
     /// </summary>
     public static string ToPlainText(string markdown)
     {
         if (string.IsNullOrEmpty(markdown))
             return string.Empty;
 
-        // Remove Markdown syntax
-        var plain = Regex.Replace(markdown, @"\*\*(.+?)\*\*", "$1"); // Bold
-        plain = Regex.Replace(plain, @"\*(.+?)\*", "$1"); // Italic
-        plain = Regex.Replace(plain, @"__(.+?)__", "$1"); // Bold alt
-        plain = Regex.Replace(plain, @"_(.+?)_", "$1"); // Italic alt
-        plain = Regex.Replace(plain, @"^#+\s+", "", RegexOptions.Multiline); // Headers
-        plain = Regex.Replace(plain, @"\[([^\]]+)\]\([^)]+\)", "$1"); // Links
-        plain = Regex.Replace(plain, @"```[^`]*```", "", RegexOptions.Singleline); // Code blocks
-        plain = Regex.Replace(plain, @"`([^`]+)`", "$1"); // Inline code
+        return Markdown.ToPlainText(markdown, _pipeline);
+    }
 
-        return plain.Trim();
+    /// <summary>
+    /// Extract wiki-style links from content [[Note Title]]
+    /// </summary>
+    public static List<string> ExtractWikiLinks(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return new List<string>();
+
+        var matches = WikiLinkRegex.Matches(content);
+        return matches.Select(m => m.Groups[1].Value.Trim()).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Extract hashtags from content
+    /// </summary>
+    public static List<string> ExtractTags(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return new List<string>();
+
+        var matches = TagRegex.Matches(content);
+        return matches.Select(m => m.Groups[1].Value.ToLower()).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Replace wiki links with HTML links
+    /// </summary>
+    public static string ReplaceWikiLinksWithHtml(string content, Func<string, string> linkResolver)
+    {
+        if (string.IsNullOrEmpty(content))
+            return content;
+
+        return WikiLinkRegex.Replace(content, match =>
+        {
+            var linkText = match.Groups[1].Value.Trim();
+            var url = linkResolver(linkText);
+            return $"<a href=\"{url}\" class=\"wiki-link\">{linkText}</a>";
+        });
+    }
+
+    /// <summary>
+    /// Get word count from markdown
+    /// </summary>
+    public static int GetWordCount(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return 0;
+
+        var plainText = ToPlainText(markdown);
+        var words = plainText.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        return words.Length;
+    }
+
+    /// <summary>
+    /// Extract first heading (H1) from markdown
+    /// </summary>
+    public static string? ExtractFirstHeading(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return null;
+
+        var headingMatch = Regex.Match(markdown, @"^#\s+(.+)$", RegexOptions.Multiline);
+        return headingMatch.Success ? headingMatch.Groups[1].Value.Trim() : null;
+    }
+
+    /// <summary>
+    /// Generate a preview/excerpt from markdown (first N words)
+    /// </summary>
+    public static string GeneratePreview(string markdown, int maxWords = 50)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return string.Empty;
+
+        var plainText = ToPlainText(markdown);
+        var words = plainText.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        if (words.Length <= maxWords)
+            return plainText;
+
+        return string.Join(" ", words.Take(maxWords)) + "...";
+    }
+
+    /// <summary>
+    /// Sanitize filename from note title
+    /// </summary>
+    public static string SanitizeFileName(string title)
+    {
+        if (string.IsNullOrEmpty(title))
+            return "untitled";
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var sanitized = new string(title.Where(c => !invalid.Contains(c)).ToArray());
+        return string.IsNullOrEmpty(sanitized) ? "untitled" : sanitized;
     }
 }
