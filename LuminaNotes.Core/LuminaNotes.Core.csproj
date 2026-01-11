@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="OllamaSharp" Version="0.6.0" />
     <PackageReference Include="SQLite-net-pcl" Version="1.9.172" />
+    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
     <PackageReference Include="Markdig" Version="0.35.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>

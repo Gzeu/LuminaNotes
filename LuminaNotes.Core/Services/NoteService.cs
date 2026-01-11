@@ -8,99 +8,80 @@ using System.Threading.Tasks;
 namespace LuminaNotes.Core.Services;
 
 /// <summary>
-/// Handles CRUD operations and business logic for notes
+/// Handles CRUD operations for notes
 /// </summary>
 public class NoteService
 {
-    private readonly DatabaseService _dbService;
+    private readonly DatabaseService _databaseService;
 
-    public NoteService(DatabaseService dbService)
+    public NoteService(DatabaseService databaseService)
     {
-        _dbService = dbService;
+        _databaseService = databaseService;
     }
 
     /// <summary>
-    /// Creates a new note in the database
+    /// Create a new note
     /// </summary>
     public async Task<Note> CreateNoteAsync(Note note)
     {
+        var db = _databaseService.GetConnection();
         note.Created = DateTime.Now;
         note.Updated = DateTime.Now;
-        
-        var conn = _dbService.GetConnection();
-        await conn.InsertAsync(note);
+        await db.InsertAsync(note);
         return note;
     }
 
     /// <summary>
-    /// Updates an existing note
+    /// Update existing note
     /// </summary>
-    public async Task UpdateNoteAsync(Note note)
+    public async Task<bool> UpdateNoteAsync(Note note)
     {
+        var db = _databaseService.GetConnection();
         note.Updated = DateTime.Now;
-        var conn = _dbService.GetConnection();
-        await conn.UpdateAsync(note);
+        var result = await db.UpdateAsync(note);
+        return result > 0;
     }
 
     /// <summary>
-    /// Deletes a note by ID
+    /// Delete note by ID
     /// </summary>
-    public async Task DeleteNoteAsync(int noteId)
+    public async Task<bool> DeleteNoteAsync(int noteId)
     {
-        var conn = _dbService.GetConnection();
-        await conn.DeleteAsync<Note>(noteId);
-        
-        // Clean up orphaned links
-        await conn.ExecuteAsync(
-            "DELETE FROM Link WHERE SourceNoteId = ? OR TargetNoteId = ?", noteId, noteId);
+        var db = _databaseService.GetConnection();
+        var result = await db.DeleteAsync<Note>(noteId);
+        return result > 0;
     }
 
     /// <summary>
-    /// Gets a note by ID
+    /// Get note by ID
     /// </summary>
     public async Task<Note?> GetNoteByIdAsync(int noteId)
     {
-        var conn = _dbService.GetConnection();
-        return await conn.FindAsync<Note>(noteId);
+        var db = _databaseService.GetConnection();
+        return await db.FindAsync<Note>(noteId);
     }
 
     /// <summary>
-    /// Gets the daily note for a specific date, creating it if it doesn't exist
+    /// Get daily note for specific date (or create if doesn't exist)
     /// </summary>
-    public async Task<Note> GetDailyNoteAsync(DateTime date)
+    public async Task<Note?> GetDailyNoteAsync(DateTime date)
     {
-        var conn = _dbService.GetConnection();
-        var dateOnly = date.Date;
-        
-        var existing = await conn.Table<Note>()
-            .Where(n => n.IsDailyNote && n.DailyNoteDate == dateOnly)
+        var db = _databaseService.GetConnection();
+        var dateString = date.ToString("yyyy-MM-dd");
+        var note = await db.Table<Note>()
+            .Where(n => n.DailyNoteDate == dateString)
             .FirstOrDefaultAsync();
-
-        if (existing != null)
-            return existing;
-
-        // Create new daily note
-        var newNote = new Note
-        {
-            Title = $"Daily Note - {date:MMMM dd, yyyy}",
-            Content = string.Empty,
-            IsDailyNote = true,
-            DailyNoteDate = dateOnly,
-            Created = DateTime.Now,
-            Updated = DateTime.Now
-        };
-
-        await CreateNoteAsync(newNote);
-        return newNote;
+        
+        return note;
     }
 
     /// <summary>
-    /// Gets all notes ordered by last updated
+    /// Get all notes (with optional limit)
     /// </summary>
     public async Task<List<Note>> GetAllNotesAsync(int limit = 100, int offset = 0)
     {
-        var conn = _dbService.GetConnection();
-        return await conn.Table<Note>()
+        var db = _databaseService.GetConnection();
+        return await db.Table<Note>()
             .OrderByDescending(n => n.Updated)
             .Skip(offset)
             .Take(limit)
@@ -108,30 +89,49 @@ public class NoteService
     }
 
     /// <summary>
-    /// Searches notes by title or content
+    /// Search notes by title or content
     /// </summary>
     public async Task<List<Note>> SearchNotesAsync(string query)
     {
-        var conn = _dbService.GetConnection();
-        var searchTerm = $"%{query}%";
-        
-        return await conn.QueryAsync<Note>(
-            "SELECT * FROM Note WHERE Title LIKE ? OR Content LIKE ? ORDER BY Updated DESC LIMIT 50",
-            searchTerm, searchTerm);
+        var db = _databaseService.GetConnection();
+        var lowerQuery = query.ToLower();
+        return await db.Table<Note>()
+            .Where(n => n.Title.ToLower().Contains(lowerQuery) || n.Content.ToLower().Contains(lowerQuery))
+            .OrderByDescending(n => n.Updated)
+            .ToListAsync();
     }
 
     /// <summary>
-    /// Gets notes by tag ID
+    /// Get notes by tag
     /// </summary>
-    public async Task<List<Note>> GetNotesByTagAsync(int tagId)
+    public async Task<List<Note>> GetNotesByTagAsync(string tagName)
     {
-        var conn = _dbService.GetConnection();
-        var allNotes = await conn.Table<Note>().ToListAsync();
+        var db = _databaseService.GetConnection();
+        var allNotes = await db.Table<Note>().ToListAsync();
         
-        return allNotes.Where(note =>
+        return allNotes.Where(n => 
         {
-            var tagIds = JsonSerializer.Deserialize<List<int>>(note.Tags) ?? new List<int>();
-            return tagIds.Contains(tagId);
+            try
+            {
+                var tags = JsonSerializer.Deserialize<List<string>>(n.Tags);
+                return tags?.Contains(tagName, StringComparer.OrdinalIgnoreCase) ?? false;
+            }
+            catch
+            {
+                return false;
+            }
         }).ToList();
+    }
+
+    /// <summary>
+    /// Get pinned notes
+    /// </summary>
+    public async Task<List<Note>> GetPinnedNotesAsync()
+    {
+        var db = _databaseService.GetConnection();
+        return await db.Table<Note>()
+            .Where(n => n.IsPinned)
+            .OrderByDescending(n => n.Updated)
+            .ToListAsync();
     }
 }

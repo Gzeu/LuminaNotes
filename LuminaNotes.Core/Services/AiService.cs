@@ -5,47 +5,24 @@ using System.Threading.Tasks;
 namespace LuminaNotes.Core.Services;
 
 /// <summary>
-/// Handles AI integration via Ollama for note assistance
+/// Handles AI operations using Ollama local LLM
 /// </summary>
 public class AiService
 {
-    private OllamaApiClient? _ollamaClient;
+    private readonly OllamaApiClient _ollamaClient;
     private string _currentModel = "llama3.1:8b";
-    private readonly Uri _ollamaUri = new("http://localhost:11434");
 
-    public AiService()
+    public AiService(string ollamaEndpoint = "http://localhost:11434", string defaultModel = "llama3.1:8b")
     {
-        InitializeClient();
-    }
-
-    private void InitializeClient()
-    {
-        try
-        {
-            _ollamaClient = new OllamaApiClient(_ollamaUri, _currentModel);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to initialize Ollama client: {ex.Message}");
-        }
+        _ollamaClient = new OllamaApiClient(new Uri(ollamaEndpoint), defaultModel);
+        _currentModel = defaultModel;
     }
 
     /// <summary>
-    /// Changes the active AI model
-    /// </summary>
-    public void SetModel(string modelName)
-    {
-        _currentModel = modelName;
-        InitializeClient();
-    }
-
-    /// <summary>
-    /// Checks if Ollama service is available
+    /// Check if Ollama server is running and accessible
     /// </summary>
     public async Task<bool> IsAiAvailableAsync()
     {
-        if (_ollamaClient == null) return false;
-
         try
         {
             await _ollamaClient.ListLocalModelsAsync();
@@ -58,40 +35,35 @@ public class AiService
     }
 
     /// <summary>
-    /// Summarizes note content concisely
+    /// Summarize note content
     /// </summary>
-    public async Task<string> SummarizeAsync(string content, string? customPrompt = null)
+    public async Task<string> SummarizeAsync(string content, string customPrompt = "")
     {
-        if (_ollamaClient == null)
-            return "AI service not available. Please ensure Ollama is running.";
-
         try
         {
-            var prompt = customPrompt ?? "Summarize the following note concisely, keeping key points:";
-            var fullPrompt = $"{prompt}\n\n{content}";
-            
-            var response = await _ollamaClient.GenerateAsync(fullPrompt);
-            return response.Response ?? "No response generated.";
+            var prompt = string.IsNullOrEmpty(customPrompt)
+                ? $"Summarize the following note concisely in 2-3 sentences:\n\n{content}"
+                : $"{customPrompt}\n\n{content}";
+
+            var response = await _ollamaClient.GenerateAsync(prompt);
+            return response.Response ?? "Unable to generate summary.";
         }
         catch (Exception ex)
         {
-            return $"Error: {ex.Message}. Check if Ollama is running on {_ollamaUri}.";
+            return $"Error: {ex.Message}. Ensure Ollama is running.";
         }
     }
 
     /// <summary>
-    /// Rewrites text in specified style (formal, casual, professional, etc.)
+    /// Rewrite text in different style
     /// </summary>
     public async Task<string> RewriteAsync(string content, string style = "formal")
     {
-        if (_ollamaClient == null)
-            return "AI service not available.";
-
         try
         {
-            var prompt = $"Rewrite the following text in a {style} style:\n\n{content}";
+            var prompt = $"Rewrite the following text in a {style} style, maintaining the core message:\n\n{content}";
             var response = await _ollamaClient.GenerateAsync(prompt);
-            return response.Response ?? "No response generated.";
+            return response.Response ?? "Unable to rewrite text.";
         }
         catch (Exception ex)
         {
@@ -100,18 +72,15 @@ public class AiService
     }
 
     /// <summary>
-    /// Generates ideas based on a topic
+    /// Generate ideas on a topic
     /// </summary>
-    public async Task<string> GenerateIdeasAsync(string topic)
+    public async Task<string> GenerateIdeasAsync(string topic, int count = 5)
     {
-        if (_ollamaClient == null)
-            return "AI service not available.";
-
         try
         {
-            var prompt = $"Generate 5 creative and actionable ideas about: {topic}";
+            var prompt = $"Generate {count} creative and actionable ideas related to: {topic}";
             var response = await _ollamaClient.GenerateAsync(prompt);
-            return response.Response ?? "No ideas generated.";
+            return response.Response ?? "Unable to generate ideas.";
         }
         catch (Exception ex)
         {
@@ -120,22 +89,44 @@ public class AiService
     }
 
     /// <summary>
-    /// Answers questions based on provided notes context
+    /// Answer question based on notes context
     /// </summary>
     public async Task<string> QueryNotesAsync(string question, string notesContext)
     {
-        if (_ollamaClient == null)
-            return "AI service not available.";
-
         try
         {
-            var prompt = $"Based on these notes:\n{notesContext}\n\nAnswer this question: {question}";
+            var prompt = $"Based on the following notes:\n\n{notesContext}\n\nAnswer this question: {question}";
             var response = await _ollamaClient.GenerateAsync(prompt);
-            return response.Response ?? "No answer generated.";
+            return response.Response ?? "Unable to answer question.";
         }
         catch (Exception ex)
         {
             return $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Change the active model
+    /// </summary>
+    public void SetModel(string modelName)
+    {
+        _currentModel = modelName;
+        _ollamaClient.SelectedModel = modelName;
+    }
+
+    /// <summary>
+    /// Get list of available models
+    /// </summary>
+    public async Task<string[]> GetAvailableModelsAsync()
+    {
+        try
+        {
+            var models = await _ollamaClient.ListLocalModelsAsync();
+            return models.Select(m => m.Name).ToArray();
+        }
+        catch
+        {
+            return Array.Empty<string>();
         }
     }
 }

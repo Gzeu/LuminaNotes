@@ -6,74 +6,128 @@ using System.Threading.Tasks;
 namespace LuminaNotes.Core.Services;
 
 /// <summary>
-/// Handles graph-related operations for note linking visualization
+/// Handles graph visualization logic for note connections
 /// </summary>
 public class GraphService
 {
-    private readonly DatabaseService _dbService;
+    private readonly DatabaseService _databaseService;
+    private readonly NoteService _noteService;
 
-    public GraphService(DatabaseService dbService)
+    public GraphService(DatabaseService databaseService, NoteService noteService)
     {
-        _dbService = dbService;
+        _databaseService = databaseService;
+        _noteService = noteService;
     }
 
     /// <summary>
-    /// Creates a link between two notes
+    /// Get all links in the system
     /// </summary>
-    public async Task CreateLinkAsync(int sourceNoteId, int targetNoteId, string? context = null)
+    public async Task<List<Link>> GetAllLinksAsync()
     {
-        var conn = _dbService.GetConnection();
+        var db = _databaseService.GetConnection();
+        return await db.Table<Link>().ToListAsync();
+    }
+
+    /// <summary>
+    /// Get links for a specific note (both incoming and outgoing)
+    /// </summary>
+    public async Task<(List<Link> outgoing, List<Link> incoming)> GetNoteLinksAsync(int noteId)
+    {
+        var db = _databaseService.GetConnection();
+        
+        var outgoing = await db.Table<Link>()
+            .Where(l => l.SourceNoteId == noteId)
+            .ToListAsync();
+        
+        var incoming = await db.Table<Link>()
+            .Where(l => l.TargetNoteId == noteId)
+            .ToListAsync();
+        
+        return (outgoing, incoming);
+    }
+
+    /// <summary>
+    /// Create a bidirectional link between two notes
+    /// </summary>
+    public async Task<Link> CreateLinkAsync(int sourceNoteId, int targetNoteId, string? linkType = null, string? context = null)
+    {
+        var db = _databaseService.GetConnection();
         
         // Check if link already exists
-        var existing = await conn.Table<Link>()
+        var existingLink = await db.Table<Link>()
             .Where(l => l.SourceNoteId == sourceNoteId && l.TargetNoteId == targetNoteId)
             .FirstOrDefaultAsync();
-
-        if (existing != null) return;
-
+        
+        if (existingLink != null)
+            return existingLink;
+        
         var link = new Link
         {
             SourceNoteId = sourceNoteId,
             TargetNoteId = targetNoteId,
+            LinkType = linkType,
             Context = context
         };
-
-        await conn.InsertAsync(link);
-    }
-
-    /// <summary>
-    /// Gets all links for a specific note
-    /// </summary>
-    public async Task<List<Link>> GetNoteLinksAsync(int noteId)
-    {
-        var conn = _dbService.GetConnection();
         
-        var outgoing = await conn.Table<Link>()
-            .Where(l => l.SourceNoteId == noteId)
-            .ToListAsync();
+        await db.InsertAsync(link);
+        return link;
+    }
+
+    /// <summary>
+    /// Delete a link
+    /// </summary>
+    public async Task<bool> DeleteLinkAsync(int linkId)
+    {
+        var db = _databaseService.GetConnection();
+        var result = await db.DeleteAsync<Link>(linkId);
+        return result > 0;
+    }
+
+    /// <summary>
+    /// Get graph data for visualization (nodes and edges)
+    /// </summary>
+    public async Task<GraphData> GetGraphDataAsync()
+    {
+        var notes = await _noteService.GetAllNotesAsync(limit: 500);
+        var links = await GetAllLinksAsync();
         
-        var incoming = await conn.Table<Link>()
-            .Where(l => l.TargetNoteId == noteId)
-            .ToListAsync();
-
-        return outgoing.Concat(incoming).ToList();
+        return new GraphData
+        {
+            Nodes = notes.Select(n => new GraphNode
+            {
+                Id = n.ID,
+                Title = n.Title,
+                IsPinned = n.IsPinned
+            }).ToList(),
+            Edges = links.Select(l => new GraphEdge
+            {
+                SourceId = l.SourceNoteId,
+                TargetId = l.TargetNoteId,
+                LinkType = l.LinkType
+            }).ToList()
+        };
     }
+}
 
-    /// <summary>
-    /// Gets all links in the database for graph visualization
-    /// </summary>
-    public async Task<List<Link>> GetAllLinksAsync()
-    {
-        var conn = _dbService.GetConnection();
-        return await conn.Table<Link>().ToListAsync();
-    }
+/// <summary>
+/// Graph data structure for visualization
+/// </summary>
+public class GraphData
+{
+    public List<GraphNode> Nodes { get; set; } = new();
+    public List<GraphEdge> Edges { get; set; } = new();
+}
 
-    /// <summary>
-    /// Deletes a specific link
-    /// </summary>
-    public async Task DeleteLinkAsync(int linkId)
-    {
-        var conn = _dbService.GetConnection();
-        await conn.DeleteAsync<Link>(linkId);
-    }
+public class GraphNode
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public bool IsPinned { get; set; }
+}
+
+public class GraphEdge
+{
+    public int SourceId { get; set; }
+    public int TargetId { get; set; }
+    public string? LinkType { get; set; }
 }

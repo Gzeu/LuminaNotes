@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace LuminaNotes.Core.Services;
 
 /// <summary>
-/// Manages SQLite database initialization and connection
+/// Manages SQLite database initialization and connections
 /// </summary>
 public class DatabaseService
 {
@@ -16,39 +16,42 @@ public class DatabaseService
 
     public DatabaseService()
     {
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var luminaFolder = Path.Combine(appDataPath, "LuminaNotes");
-        Directory.CreateDirectory(luminaFolder);
-        _dbPath = Path.Combine(luminaFolder, "LuminaNotes.db");
+        _dbPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LuminaNotes",
+            "LuminaNotes.db"
+        );
     }
 
     /// <summary>
-    /// Initializes database connection and creates tables
+    /// Initialize database and create tables if they don't exist
     /// </summary>
     public async Task InitializeAsync()
     {
         if (_connection != null) return;
 
-        _connection = new SQLiteAsyncConnection(_dbPath);
-        
-        // Create tables with indexes for performance
+        // Ensure directory exists
+        var dbDir = Path.GetDirectoryName(_dbPath);
+        if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
+        {
+            Directory.CreateDirectory(dbDir);
+        }
+
+        _connection = new SQLiteAsyncConnection(_dbPath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
+
+        // Create tables
         await _connection.CreateTableAsync<Note>();
         await _connection.CreateTableAsync<Tag>();
         await _connection.CreateTableAsync<Link>();
 
-        // Create indexes for common queries
-        await _connection.ExecuteAsync(
-            "CREATE INDEX IF NOT EXISTS idx_note_dailydate ON Note(DailyNoteDate)");
-        await _connection.ExecuteAsync(
-            "CREATE INDEX IF NOT EXISTS idx_note_created ON Note(Created DESC)");
-        await _connection.ExecuteAsync(
-            "CREATE INDEX IF NOT EXISTS idx_link_source ON Link(SourceNoteId)");
-        await _connection.ExecuteAsync(
-            "CREATE INDEX IF NOT EXISTS idx_link_target ON Link(TargetNoteId)");
+        // Create indexes for performance
+        await _connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_notes_title ON Note(Title)");
+        await _connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_notes_dailydate ON Note(DailyNoteDate)");
+        await _connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_notes_created ON Note(Created)");
     }
 
     /// <summary>
-    /// Gets the active database connection
+    /// Get database connection (must call InitializeAsync first)
     /// </summary>
     public SQLiteAsyncConnection GetConnection()
     {
@@ -58,7 +61,19 @@ public class DatabaseService
     }
 
     /// <summary>
-    /// Gets the database file path
+    /// Close database connection
+    /// </summary>
+    public async Task CloseAsync()
+    {
+        if (_connection != null)
+        {
+            await _connection.CloseAsync();
+            _connection = null;
+        }
+    }
+
+    /// <summary>
+    /// Get database file path
     /// </summary>
     public string GetDatabasePath() => _dbPath;
 }
