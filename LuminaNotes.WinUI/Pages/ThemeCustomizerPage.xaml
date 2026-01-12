@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="LuminaNotes.WinUI.Pages.ThemeCustomizerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel Spacing="24" MaxWidth="900" Padding="24">
+            <TextBlock Text="Theme Customizer" Style="{StaticResource PageTitleStyle}"/>
+
+            <!-- Presets -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Theme Presets" Style="{StaticResource SectionTitleStyle}"/>
+                <TextBlock Text="Choose a pre-built theme or customize your own" 
+                           Style="{StaticResource CaptionStyle}"/>
+                
+                <GridView x:Name="PresetsGrid" SelectionMode="Single" SelectionChanged="PresetsGrid_SelectionChanged">
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Border Style="{StaticResource BaseCardStyle}" 
+                                    Width="150" 
+                                    Height="100"
+                                    Padding="12">
+                                <StackPanel VerticalAlignment="Center" Spacing="8">
+                                    <Ellipse Width="40" Height="40" Fill="{StaticResource AccentGradientBrush}"/>
+                                    <TextBlock Text="{x:Bind}" 
+                                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </StackPanel>
+
+            <!-- Color Customization -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Accent Colors" Style="{StaticResource SectionTitleStyle}"/>
+                
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Spacing="8">
+                        <TextBlock Text="Primary" Style="{StaticResource CaptionStyle}"/>
+                        <ColorPicker x:Name="PrimaryColorPicker" ColorChanged="ColorPicker_ColorChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <TextBlock Text="Secondary" Style="{StaticResource CaptionStyle}"/>
+                        <ColorPicker x:Name="SecondaryColorPicker" ColorChanged="ColorPicker_ColorChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Spacing="8">
+                        <TextBlock Text="Tertiary" Style="{StaticResource CaptionStyle}"/>
+                        <ColorPicker x:Name="TertiaryColorPicker" ColorChanged="ColorPicker_ColorChanged"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+
+            <!-- Typography -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Typography" Style="{StaticResource SectionTitleStyle}"/>
+                
+                <Grid RowSpacing="12" ColumnSpacing="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Slider x:Name="TitleSizeSlider" 
+                            Grid.Row="0" Grid.Column="0"
+                            Header="Title Font Size"
+                            Minimum="20" Maximum="40" Value="28"
+                            ValueChanged="Typography_ValueChanged"/>
+
+                    <Slider x:Name="BodySizeSlider" 
+                            Grid.Row="0" Grid.Column="1"
+                            Header="Body Font Size"
+                            Minimum="12" Maximum="18" Value="14"
+                            ValueChanged="Typography_ValueChanged"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Spacing -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Spacing Scale" Style="{StaticResource SectionTitleStyle}"/>
+                
+                <ComboBox x:Name="SpacingPresetCombo" 
+                          Header="Density"
+                          SelectedIndex="0"
+                          SelectionChanged="SpacingPreset_SelectionChanged">
+                    <ComboBoxItem Content="Compact"/>
+                    <ComboBoxItem Content="Default"/>
+                    <ComboBoxItem Content="Comfortable"/>
+                </ComboBox>
+            </StackPanel>
+
+            <!-- Preview -->
+            <Border Style="{StaticResource ElevatedCardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Preview" Style="{StaticResource SectionTitleStyle}"/>
+                    
+                    <Button Content="Primary Button" Style="{StaticResource AccentButtonStyle}"/>
+                    
+                    <Border Style="{StaticResource BaseCardStyle}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Sample Card" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="This is how your theme will look" Style="{StaticResource CaptionStyle}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Button Content="Apply Changes" Style="{StaticResource AccentButtonStyle}" Click="Apply_Click"/>
+                <Button Content="Reset to Default" Click="Reset_Click"/>
+                <Button Content="Export Theme" Click="Export_Click"/>
+                <Button Content="Import Theme" Click="Import_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
