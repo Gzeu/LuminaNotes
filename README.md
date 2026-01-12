@@ -2,7 +2,7 @@
 
 **AI-Powered Personal Knowledge Management for Windows**
 
-A modern, privacy-focused note-taking application built with WinUI 3.0, .NET 9, and local AI integration via Ollama. Features Fluent Design, bidirectional linking, graph visualization, and intelligent assistance—all running locally on your machine.
+A modern, privacy-focused note-taking application built with WinUI 3.0, .NET 9, and local AI integration via Ollama. Features Fluent Design, bidirectional linking, graph visualization, intelligent assistance, and **fully customizable themes with design tokens**—all running locally on your machine.
 
 ![Windows](https://img.shields.io/badge/Windows-11%2F12-0078D6?logo=windows)
 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet)
@@ -27,13 +27,42 @@ A modern, privacy-focused note-taking application built with WinUI 3.0, .NET 9, 
 ### 🎨 Modern Windows UI
 - **Fluent Design 3.0** - Mica/Acrylic backgrounds
 - **Dark/Light Themes** - Automatic or manual
+- **Design Tokens System** - 8 built-in themes + full customization
+- **Theme Customizer** - Visual editor with live preview
 - **Responsive Layout** - Sidebar navigation + content + AI panel
-- **Quick Capture** - Always-on-top mini window (hotkey access)
+- **Quick Capture** - Always-on-top mini window (coming soon)
 
 ### 📊 Knowledge Graph
 - **Visual Graph View** - See connections between notes
 - **Interactive Navigation** - Click nodes to jump to notes
 - **Community Toolkit** - Leveraging WinUI controls
+
+## 🎨 Design System
+
+### Built-in Theme Presets
+
+| Theme | Description | Colors |
+|-------|-------------|--------|
+| **Default** | Modern vibrant | Indigo → Purple → Pink |
+| **Ocean** | Calm professional | Sky Blue → Cyan |
+| **Forest** | Natural fresh | Green → Teal → Lime |
+| **Sunset** | Warm energetic | Amber → Orange → Red |
+| **Midnight** | Dark mysterious | Purple → Fuchsia |
+| **Monochrome** | Minimalist neutral | Gray scale |
+| **Compact** | Dense UI | Reduced spacing |
+| **Comfortable** | Spacious relaxed | Generous spacing |
+
+### Customization
+
+- **Color Pickers**: Customize accent colors
+- **Typography Sliders**: Adjust font sizes
+- **Density Presets**: Compact/Default/Comfortable
+- **Export/Import**: Share themes as JSON
+- **Live Preview**: See changes in real-time
+
+📖 [Complete Design System Documentation](docs/DESIGN_SYSTEM.md)
+
+🎨 [Design Tokens Guide](docs/DESIGN_TOKENS.md)
 
 ## 🛠️ Tech Stack (January 2026)
 
@@ -84,22 +113,31 @@ A modern, privacy-focused note-taking application built with WinUI 3.0, .NET 9, 
 ### Configuration
 
 - **AI Settings**: Configure Ollama model in Settings page (default: `llama3.1:8b`)
-- **Database**: Auto-created at `%LOCALAPPDATA%\LuminaNotes.db`
-- **Theme**: Switch between Dark/Light in Settings
+- **Database**: Auto-created at `%LOCALAPPDATA%\LuminaNotes\LuminaNotes.db`
+- **Theme**: Customize in Settings → Theme Customizer
+- **Design Tokens**: Stored at `%LOCALAPPDATA%\LuminaNotes\design-tokens.json`
 
 ## 📁 Project Structure
 
 ```
 LuminaNotes/
 ├── LuminaNotes.Core/          # Business logic & services
-│   ├── Models/                # Data models (Note, Tag, Link)
-│   ├── Services/              # AI, Database, Note, Graph services
+│   ├── Models/                # Data models (Note, Tag, Link, DesignTokens)
+│   ├── Services/              # AI, Database, Note, Graph, Theme services
 │   └── Utilities/             # Encryption, Markdown helpers
 ├── LuminaNotes.WinUI/         # UI layer
-│   ├── Pages/                 # DailyNotes, AllNotes, Graph, Search, Settings
+│   ├── Pages/                 # DailyNotes, AllNotes, Graph, Search, Settings, ThemeCustomizer
 │   ├── ViewModels/            # MVVM view models
-│   ├── Controls/              # Custom controls (RichEditor)
+│   ├── Controls/              # Custom controls (RichEditor, NoteCard, AnimatedCard, etc.)
+│   ├── Styles/                # Design system (Theme, Button, Card, Text, Animation styles)
+│   ├── Converters/            # Value converters
+│   ├── Helpers/               # UI helpers, animations
+│   ├── Services/              # ThemeApplier
 │   └── Assets/                # Icons, images
+├── docs/                      # Documentation
+│   ├── DESIGN_SYSTEM.md       # Complete design guide
+│   ├── DESIGN_TOKENS.md       # Tokens system documentation
+│   └── CONTROLS_USAGE.md      # Custom controls guide
 └── README.md
 ```
 
@@ -107,9 +145,12 @@ LuminaNotes/
 
 ### Phase 1: MVP (Weeks 1-2) ✅
 - [x] Project setup with WinUI 3 + .NET 9
-- [ ] Basic note CRUD (Create, Read, Update, Delete)
+- [x] Design system with tokens
+- [x] Theme customizer with 8 presets
+- [x] Custom UI controls
+- [ ] Basic note CRUD
 - [ ] Daily notes functionality
-- [ ] Ollama integration (summarize, rewrite)
+- [ ] Ollama integration
 - [ ] Markdown editor
 
 ### Phase 2: Core Features (Weeks 3-4)
@@ -134,6 +175,8 @@ Contributions welcome! Please:
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+📖 [Contributing Guidelines](CONTRIBUTING.md)
 
 ## 📄 License
 

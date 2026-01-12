@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using LuminaNotes.Core.Services;
 using LuminaNotes.WinUI.ViewModels;
+using LuminaNotes.WinUI.Services;
 using System;
 
 namespace LuminaNotes.WinUI;
@@ -12,6 +13,7 @@ namespace LuminaNotes.WinUI;
 public partial class App : Application
 {
     private Window? m_window;
+    public static Window MainWindow { get; private set; } = null!;
 
     public App()
     {
@@ -29,6 +31,10 @@ public partial class App : Application
         services.AddSingleton<NoteService>();
         services.AddSingleton<AiService>();
         services.AddSingleton<GraphService>();
+        services.AddSingleton<ThemeService>();
+
+        // WinUI services
+        services.AddSingleton<ThemeApplier>();
 
         // ViewModels
         services.AddTransient<MainViewModel>();
@@ -63,7 +69,16 @@ public partial class App : Application
         var dbService = Ioc.Default.GetRequiredService<DatabaseService>();
         await dbService.InitializeAsync();
 
+        // Initialize theme system
+        var themeService = Ioc.Default.GetRequiredService<ThemeService>();
+        await themeService.LoadTokensAsync();
+
+        // Apply theme to UI
+        var themeApplier = Ioc.Default.GetRequiredService<ThemeApplier>();
+        themeApplier.ApplyTokens(themeService.GetTokens());
+
         m_window = new MainWindow();
+        MainWindow = m_window;
         m_window.Activate();
     }
 }
