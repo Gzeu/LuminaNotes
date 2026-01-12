@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="LuminaNotes.WinUI.Controls.NoteCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Border x:Name="CardRoot"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="16"
+            Margin="0,0,0,8"
+            PointerEntered="CardRoot_PointerEntered"
+            PointerExited="CardRoot_PointerExited">
+        
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="CardTransform"/>
+        </Border.RenderTransform>
+        
+        <Grid RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock x:Name="TitleText"
+                           Grid.Column="0"
+                           Text="Note Title"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxLines="1"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <FontIcon x:Name="PinnedIcon"
+                              Glyph="&#xE734;"
+                              FontSize="14"
+                              Foreground="{StaticResource AccentPrimaryBrush}"
+                              Visibility="Collapsed"/>
+                    <FontIcon x:Name="EncryptedIcon"
+                              Glyph="&#xE72E;"
+                              FontSize="14"
+                              Foreground="{StaticResource SuccessColor}"
+                              Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Preview Content -->
+            <TextBlock x:Name="ContentPreview"
+                       Grid.Row="1"
+                       Text="Note preview text will appear here..."
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextTrimming="CharacterEllipsis"
+                       MaxLines="2"
+                       TextWrapping="Wrap"/>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Tags -->
+                <ItemsControl x:Name="TagsList" Grid.Column="0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="4"
+                                    Padding="6,2">
+                                <TextBlock Text="{x:Bind}" FontSize="11"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                
+                <!-- Date -->
+                <TextBlock x:Name="DateText"
+                           Grid.Column="1"
+                           Style="{StaticResource CaptionStyle}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

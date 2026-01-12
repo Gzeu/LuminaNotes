@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="LuminaNotes.WinUI.Controls.EmptyState"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel VerticalAlignment="Center" 
+                HorizontalAlignment="Center" 
+                Spacing="16"
+                MaxWidth="400"
+                Padding="24">
+        
+        <!-- Icon -->
+        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                Width="80"
+                Height="80"
+                CornerRadius="40">
+            <FontIcon x:Name="IconGlyph"
+                      Glyph="&#xE74C;"
+                      FontSize="32"
+                      Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Border>
+
+        <!-- Title -->
+        <TextBlock x:Name="TitleText"
+                   Text="No items found"
+                   Style="{StaticResource SubtitleTextBlockStyle}"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"/>
+
+        <!-- Description -->
+        <TextBlock x:Name="DescriptionText"
+                   Text="Get started by creating your first item"
+                   Style="{StaticResource BodyTextBlockStyle}"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"/>
+
+        <!-- Action Button (optional) -->
+        <Button x:Name="ActionButton"
+                Content="Create New"
+                Style="{StaticResource AccentButtonStyle}"
+                HorizontalAlignment="Center"
+                Visibility="Collapsed"
+                Click="ActionButton_Click"/>
+    </StackPanel>
+</UserControl>

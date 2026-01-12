@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="LuminaNotes.WinUI.Controls.RichEditorControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" 
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="8,4">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <!-- Formatting Buttons -->
+                <Button Content="B" FontWeight="Bold" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Bold (Ctrl+B)"/>
+                <Button Content="I" FontStyle="Italic" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Italic (Ctrl+I)"/>
+                <Button Content="U" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Underline (Ctrl+U)">
+                    <Button.Content>
+                        <TextBlock Text="U" TextDecorations="Underline"/>
+                    </Button.Content>
+                </Button>
+                
+                <MenuBarItemSeparator/>
+                
+                <!-- Headings -->
+                <Button Content="H1" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Heading 1"/>
+                <Button Content="H2" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Heading 2"/>
+                <Button Content="H3" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Heading 3"/>
+                
+                <MenuBarItemSeparator/>
+                
+                <!-- List & Links -->
+                <Button Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Bullet List">
+                    <FontIcon Glyph="&#xE8FD;"/>
+                </Button>
+                <Button Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Numbered List">
+                    <FontIcon Glyph="&#xE8FE;"/>
+                </Button>
+                <Button Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Insert Link">
+                    <FontIcon Glyph="&#xE71B;"/>
+                </Button>
+                <Button Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Wiki Link [[]]">
+                    <FontIcon Glyph="&#xE8A1;"/>
+                </Button>
+                
+                <MenuBarItemSeparator/>
+                
+                <!-- Preview Toggle -->
+                <ToggleButton x:Name="PreviewToggle" Style="{StaticResource IconButtonStyle}" ToolTipService.ToolTip="Toggle Preview">
+                    <FontIcon Glyph="&#xE890;"/>
+                </ToggleButton>
+            </StackPanel>
+        </Border>
+
+        <!-- Editor Area -->
+        <Grid Grid.Row="1">
+            <!-- Markdown Editor -->
+            <TextBox x:Name="MarkdownEditor"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     IsSpellCheckEnabled="True"
+                     PlaceholderText="Start writing in Markdown..."
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Padding="16"
+                     FontFamily="Cascadia Code, Consolas, Courier New"
+                     FontSize="14"
+                     Visibility="{x:Bind PreviewToggle.IsChecked, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+            
+            <!-- Preview (HTML rendered) -->
+            <ScrollViewer Grid.Row="1" 
+                          Padding="16"
+                          Visibility="{x:Bind PreviewToggle.IsChecked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <RichTextBlock x:Name="PreviewContent" IsTextSelectionEnabled="True"/>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="WordCountText" Style="{StaticResource CaptionStyle}"/>
+                    <TextBlock x:Name="CharCountText" Style="{StaticResource CaptionStyle}"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource AccentPrimaryBrush}"/>
+                    <TextBlock Text="Markdown enabled" Style="{StaticResource CaptionStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
